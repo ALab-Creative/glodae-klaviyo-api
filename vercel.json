@@ -12,10 +12,4 @@
       "dest": "api/$1"
     }
   ]
-  // "env": {
-  //   "MAILCHIMP_API_KEY": "@mailchimp_api_key",
-  //   "MAILCHIMP_SERVER_PREFIX": "@mailchimp_server_prefix",
-  //   "MAILCHIMP_AUDIENCE_ID": "@mailchimp_audience_id",
-  //   "ALLOWED_ORIGIN": "@allowed_origin"
-  // }
 }
