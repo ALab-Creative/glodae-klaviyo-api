@@ -1,0 +1,27 @@
+{
+  "name": "mailchimp-contact-form-api",
+  "version": "1.0.0",
+  "description": "Vercel API for Shopify contact forms (regular + wholesale) posting to Mailchimp",
+  "main": "api/contact.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Build complete'",
+    "test": "node --test tests/**/*.test.js"
+  },
+  "keywords": [
+    "shopify",
+    "mailchimp",
+    "vercel",
+    "api",
+    "contact-form"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "crypto": "^1.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  }
+}
