@@ -1,5 +1,5 @@
 {
-  "name": "mailchimp-contact-form-api1",
+  "name": "mailchimp-contact-form-api",
   "version": "1.0.0",
   "description": "Vercel API for Shopify contact forms (regular + wholesale) posting to Mailchimp",
   "main": "api/contact.js",
