@@ -79,11 +79,16 @@ export default async function handler(req, res) {
     // 3) Normalize phone
     const normalizedPhone = normalizePhone(countryCode, phoneNumber);
 
-    // 4) Merge all address-related inputs into one Mailchimp ADDRESS field
-    const mergedAddress = [address, address2, city, province, postalCode, country]
-      .map(value => (value || '').trim())
-      .filter(Boolean)
-      .join(', ');
+    // 4) Build a structured Mailchimp ADDRESS merge field.
+    // Mailchimp address-type merge fields expect an object, not a single string.
+    const addressValue = {
+      addr1: address.trim(),
+      addr2: (address2 || '').trim(),
+      city: city.trim(),
+      state: (province || '').trim(),
+      zip: postalCode.trim(),
+      country: country.trim()
+    };
 
     // 5) Prepare merge fields using environment variable keys
     const mergeFields = {
@@ -91,7 +96,7 @@ export default async function handler(req, res) {
       [process.env.MAILCHIMP_FIELD_LNAME || 'LNAME']: lastName.trim(),
       [process.env.MAILCHIMP_FIELD_COUNTRY || 'COUNTRY']: country.trim(),
       [process.env.MAILCHIMP_FIELD_COMPATTN || 'COMPATTN']: companyAttention.trim(),
-      [process.env.MAILCHIMP_FIELD_ADDRESS || 'ADDRESS']: mergedAddress,
+      [process.env.MAILCHIMP_FIELD_ADDRESS || 'ADDRESS']: addressValue,
       [process.env.MAILCHIMP_FIELD_PHONE || 'PHONE']: normalizedPhone,
       [process.env.MAILCHIMP_FIELD_CMPDESC || 'CMPDESC']: companyDescription.trim(),
       [process.env.MAILCHIMP_FIELD_WEBSITE || 'WEBSITE']: (website || '').trim(),
