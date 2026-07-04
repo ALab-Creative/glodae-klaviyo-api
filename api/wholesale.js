@@ -1,5 +1,6 @@
 import { initMailchimp, upsertMember, addTags } from '../lib/mailchimp.js';
 import { validateWholesalePayload, normalizePhone } from '../lib/validate.js';
+import { syncShopifyCustomer } from '../lib/shopify.js';
 
 /**
  * POST /api/wholesale
@@ -114,7 +115,20 @@ export default async function handler(req, res) {
     // 7) Add tag
     await addTags(mailchimpConfig, email.trim(), ['CONTACT_WHOLESALE']);
 
-    // 8) Return success
+    // 8) Best-effort Shopify customer sync
+    try {
+      await syncShopifyCustomer({
+        email: email.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: normalizedPhone,
+        tags: [process.env.SHOPIFY_WHOLESALE_CUSTOMER_TAG || 'CONTACT_WHOLESALE']
+      });
+    } catch (shopifyError) {
+      console.error('Shopify customer sync error (wholesale):', shopifyError);
+    }
+
+    // 9) Return success
     return res.status(200).json({
       ok: true,
       message: 'Wholesale form submitted successfully'

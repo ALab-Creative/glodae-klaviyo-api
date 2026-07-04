@@ -11,6 +11,7 @@ mailchimp-form-api/
 │   └── wholesale.js       # Wholesale contact form handler
 ├── lib/
 │   ├── mailchimp.js       # Mailchimp client utilities
+│   ├── shopify.js         # Shopify customer sync utilities
 │   └── validate.js        # Form field validation
 ├── package.json           # Dependencies
 ├── vercel.json           # Vercel config
@@ -45,6 +46,11 @@ MAILCHIMP_API_KEY=xxxxxxxx-us21
 MAILCHIMP_SERVER_PREFIX=us21
 MAILCHIMP_AUDIENCE_ID=your-audience-id
 ALLOWED_ORIGIN=https://your-store.com
+SHOPIFY_STORE_DOMAIN=your-store.myshopify.com
+SHOPIFY_ADMIN_ACCESS_TOKEN=shpat_xxxxxxxxxxxxxxxxxxxxx
+SHOPIFY_API_VERSION=2026-01
+SHOPIFY_REGULAR_CUSTOMER_TAG=CONTACT_REGULAR
+SHOPIFY_WHOLESALE_CUSTOMER_TAG=CONTACT_WHOLESALE
 ```
 
 **Important:** Update the merge field environment variables to match your exact Mailchimp merge tag names:
@@ -132,6 +138,11 @@ Follow prompts and add your environment variables when prompted.
    - `MAILCHIMP_SERVER_PREFIX`
    - `MAILCHIMP_AUDIENCE_ID`
    - `ALLOWED_ORIGIN`
+  - `SHOPIFY_STORE_DOMAIN`
+  - `SHOPIFY_ADMIN_ACCESS_TOKEN`
+  - `SHOPIFY_API_VERSION`
+  - `SHOPIFY_REGULAR_CUSTOMER_TAG`
+  - `SHOPIFY_WHOLESALE_CUSTOMER_TAG`
    - All `MAILCHIMP_FIELD_*` variables
 
 6. Click **Deploy**.
@@ -149,6 +160,9 @@ vercel --prod \
 ## API Endpoints
 
 ### POST `/api/contact`
+
+Behavior note:
+- Submits to Mailchimp and then performs a best-effort Shopify customer sync (create/update by email).
 
 **Request body:**
 
@@ -190,6 +204,7 @@ vercel --prod \
 Wholesale mapping note:
 - Address-related inputs (`address`, `address2`, `city`, `province`, `postalCode`, `country`) are merged into one Mailchimp merge field: `ADDRESS`.
 - `countryCode` is only used to build `PHONE` (`countryCode + phoneNumber`) and is not posted as its own Mailchimp merge field.
+- Also performs a best-effort Shopify customer sync (create/update by email).
 
 **Request body:**
 
@@ -278,6 +293,7 @@ async function submitWholesaleForm(formData) {
 3. **Rate Limiting**: Consider adding rate limiting middleware before production.
 4. **Input Validation**: All inputs are validated server-side.
 5. **Honeypot**: Consider adding a honeypot field in your Shopify forms to reduce spam.
+6. **Shopify Scope**: The Admin access token must include `write_customers` (and typically `read_customers`) scopes.
 
 ## Troubleshooting
 

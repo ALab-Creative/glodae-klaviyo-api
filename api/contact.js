@@ -1,5 +1,6 @@
 import { initMailchimp, upsertMember, addTags } from '../lib/mailchimp.js';
 import { validateContactPayload, normalizePhone } from '../lib/validate.js';
+import { syncShopifyCustomer } from '../lib/shopify.js';
 
 /**
  * POST /api/contact
@@ -71,7 +72,20 @@ export default async function handler(req, res) {
     // 6) Add tag
     await addTags(mailchimpConfig, email.trim(), ['CONTACT_REGULAR']);
 
-    // 7) Return success
+    // 7) Best-effort Shopify customer sync
+    try {
+      await syncShopifyCustomer({
+        email: email.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: normalizedPhone,
+        tags: [process.env.SHOPIFY_REGULAR_CUSTOMER_TAG || 'CONTACT_REGULAR']
+      });
+    } catch (shopifyError) {
+      console.error('Shopify customer sync error (regular):', shopifyError);
+    }
+
+    // 8) Return success
     return res.status(200).json({
       ok: true,
       message: 'Contact form submitted successfully'
