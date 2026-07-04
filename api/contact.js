@@ -65,7 +65,8 @@ export default async function handler(req, res) {
     // 5) Upsert member to Mailchimp
     await upsertMember(mailchimpConfig, {
       email: email.trim(),
-      status_if_new: 'unsubscribed',
+      status: 'subscribed',
+      status_if_new: 'subscribed',
       merge_fields: mergeFields
     });
 
