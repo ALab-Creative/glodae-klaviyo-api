@@ -99,7 +99,7 @@ export default async function handler(req, res) {
       [process.env.MAILCHIMP_FIELD_COMPATTN || 'COMPATTN']: companyAttention.trim(),
       [process.env.MAILCHIMP_FIELD_ADDRESS || 'ADDRESS']: addressValue,
       [process.env.MAILCHIMP_FIELD_PHONE || 'PHONE']: normalizedPhone,
-      [process.env.MAILCHIMP_FIELD_CMPDESC || 'CMPDESC']: companyDescription.trim(),
+      [process.env.MAILCHIMP_FIELD_CMPDESC || 'CMPDESC']: String(companyDescription || '').trim(),
       [process.env.MAILCHIMP_FIELD_WEBSITE || 'WEBSITE']: (website || '').trim(),
       [process.env.MAILCHIMP_FIELD_SOCIAL || 'SOCIAL']: (socialMediaHandle || '').trim(),
       [process.env.MAILCHIMP_FIELD_ESTVOL || 'ESTVOL']: estimatedOrderVolume.trim()
