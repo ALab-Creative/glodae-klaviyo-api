@@ -19,7 +19,8 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "crypto": "^1.0.0"
+    "crypto": "^1.0.0",
+    "libphonenumber-js": "^1.13.8"
   },
   "devDependencies": {
     "vercel": "^33.0.0"

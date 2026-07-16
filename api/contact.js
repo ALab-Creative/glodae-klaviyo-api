@@ -1,5 +1,5 @@
 import { initKlaviyo, createProfileSubscriptionJob, upsertProfile } from '../lib/klaviyo.js';
-import { validateContactPayload, normalizePhone } from '../lib/validate.js';
+import { validateContactPayload, normalizePhone, isUnitedStatesCountry } from '../lib/validate.js';
 
 /**
  * POST /api/contact
@@ -51,17 +51,20 @@ export default async function handler(req, res) {
 
     // 3) Combine country code and local number into one normalized phone value
     const normalizedPhone = normalizePhone(countryCode, phoneNumber);
+    const isUsContact = isUnitedStatesCountry(country);
+    const klaviyoPhoneNumber = isUsContact ? normalizedPhone : undefined;
 
     // 4) Build Klaviyo profile attributes
     const profileAttributes = {
       email: email.trim().toLowerCase(),
-      phone_number: normalizedPhone,
+      phone_number: klaviyoPhoneNumber,
       properties: {
         form_variant: 'regular',
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         country: country.trim(),
-        message: message.trim()
+        message: message.trim(),
+        ...(!isUsContact ? { phone: normalizedPhone } : {})
       }
     };
 
@@ -75,13 +78,14 @@ export default async function handler(req, res) {
     // 6) Upsert additional profile attributes and custom properties
     await upsertProfile(klaviyoConfig, {
       email: email.trim().toLowerCase(),
-      phone_number: normalizedPhone,
+      phone_number: klaviyoPhoneNumber,
       first_name: firstName.trim(),
       last_name: lastName.trim(),
       properties: {
         form_variant: 'regular',
         country: country.trim(),
-        message: message.trim()
+        message: message.trim(),
+        ...(!isUsContact ? { phone: normalizedPhone } : {})
       }
     });
 

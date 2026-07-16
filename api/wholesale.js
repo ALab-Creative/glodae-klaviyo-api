@@ -1,5 +1,5 @@
 import { initKlaviyo, createProfileSubscriptionJob, upsertProfile } from '../lib/klaviyo.js';
-import { validateWholesalePayload, normalizePhone } from '../lib/validate.js';
+import { validateWholesalePayload, normalizePhone, isUnitedStatesCountry } from '../lib/validate.js';
 
 /**
  * POST /api/wholesale
@@ -78,11 +78,13 @@ export default async function handler(req, res) {
 
     // 3) Normalize phone
     const normalizedPhone = normalizePhone(countryCode, phoneNumber);
+    const isUsContact = isUnitedStatesCountry(country);
+    const klaviyoPhoneNumber = isUsContact ? normalizedPhone : undefined;
 
     // 4) Build Klaviyo profile attributes
     const profileAttributes = {
       email: email.trim().toLowerCase(),
-      phone_number: normalizedPhone,
+      phone_number: klaviyoPhoneNumber,
       properties: {
         form_variant: 'wholesale',
         first_name: firstName.trim(),
@@ -97,7 +99,8 @@ export default async function handler(req, res) {
         city: city.trim(),
         region: (province || '').trim(),
         zip: postalCode.trim(),
-        country: country.trim()
+        country: country.trim(),
+        ...(!isUsContact ? { phone: normalizedPhone } : {})
       }
     };
 
@@ -111,7 +114,7 @@ export default async function handler(req, res) {
     // 6) Upsert additional profile attributes and custom properties
     await upsertProfile(klaviyoConfig, {
       email: email.trim().toLowerCase(),
-      phone_number: normalizedPhone,
+      phone_number: klaviyoPhoneNumber,
       first_name: firstName.trim(),
       last_name: lastName.trim(),
       location: {
@@ -128,7 +131,8 @@ export default async function handler(req, res) {
         company_description: String(companyDescription || '').trim(),
         website: (website || '').trim(),
         social_media_handle: (socialMediaHandle || '').trim(),
-        estimated_order_volume: estimatedOrderVolume.trim()
+        estimated_order_volume: estimatedOrderVolume.trim(),
+        ...(!isUsContact ? { phone: normalizedPhone } : {})
       }
     });
 
