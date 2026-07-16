@@ -127,6 +127,7 @@ export default async function handler(req, res) {
       },
       properties: {
         form_variant: 'wholesale',
+        country: country.trim(),
         company_attention: companyAttention.trim(),
         company_description: String(companyDescription || '').trim(),
         website: (website || '').trim(),

@@ -81,6 +81,9 @@ export default async function handler(req, res) {
       phone_number: klaviyoPhoneNumber,
       first_name: firstName.trim(),
       last_name: lastName.trim(),
+      location: {
+        country: country.trim()
+      },
       properties: {
         form_variant: 'regular',
         country: country.trim(),
