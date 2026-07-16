@@ -1,6 +1,5 @@
-import { initMailchimp, upsertMember, addTags } from '../lib/mailchimp.js';
+import { initKlaviyo, createProfileSubscriptionJob } from '../lib/klaviyo.js';
 import { validateContactPayload, normalizePhone } from '../lib/validate.js';
-import { syncShopifyCustomer } from '../lib/shopify.js';
 
 /**
  * POST /api/contact
@@ -47,46 +46,33 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2) Initialize Mailchimp
-    const mailchimpConfig = initMailchimp();
+    // 2) Initialize Klaviyo
+    const klaviyoConfig = initKlaviyo();
 
     // 3) Combine country code and local number into one normalized phone value
     const normalizedPhone = normalizePhone(countryCode, phoneNumber);
 
-    // 4) Prepare merge fields using environment variable keys
-    const mergeFields = {
-      [process.env.MAILCHIMP_FIELD_FNAME || 'FNAME']: firstName.trim(),
-      [process.env.MAILCHIMP_FIELD_LNAME || 'LNAME']: lastName.trim(),
-      [process.env.MAILCHIMP_FIELD_COUNTRY || 'COUNTRY']: country.trim(),
-      [process.env.MAILCHIMP_FIELD_PHONE || 'PHONE']: normalizedPhone,
-      [process.env.MAILCHIMP_FIELD_MSG || 'MSG']: message.trim()
+    // 4) Build Klaviyo profile attributes
+    const profileAttributes = {
+      email: email.trim().toLowerCase(),
+      phone_number: normalizedPhone,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      properties: {
+        form_variant: 'regular',
+        country: country.trim(),
+        message: message.trim()
+      }
     };
 
-    // 5) Upsert member to Mailchimp
-    await upsertMember(mailchimpConfig, {
-      email: email.trim(),
-      status: 'subscribed',
-      status_if_new: 'subscribed',
-      merge_fields: mergeFields
+    // 5) Submit Klaviyo subscription job
+    await createProfileSubscriptionJob(klaviyoConfig, {
+      listId: klaviyoConfig.listIdRegular,
+      profile: profileAttributes,
+      source: 'Shopify Contact Form - Regular'
     });
 
-    // 6) Add tag
-    await addTags(mailchimpConfig, email.trim(), ['CONTACT_REGULAR']);
-
-    // 7) Best-effort Shopify customer sync
-    try {
-      await syncShopifyCustomer({
-        email: email.trim(),
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        phone: normalizedPhone,
-        tags: [process.env.SHOPIFY_REGULAR_CUSTOMER_TAG || 'CONTACT_REGULAR']
-      });
-    } catch (shopifyError) {
-      console.error('Shopify customer sync error (regular):', shopifyError);
-    }
-
-    // 8) Return success
+    // 6) Return success
     return res.status(200).json({
       ok: true,
       message: 'Contact form submitted successfully'

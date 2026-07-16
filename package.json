@@ -1,7 +1,7 @@
 {
-  "name": "mailchimp-contact-form-api1",
+  "name": "klaviyo-contact-form-api",
   "version": "1.0.0",
-  "description": "Vercel API for Shopify contact forms (regular + wholesale) posting to Mailchimp",
+  "description": "Vercel API for Shopify contact forms (regular + wholesale) posting to Klaviyo",
   "main": "api/contact.js",
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
   },
   "keywords": [
     "shopify",
-    "mailchimp",
+    "klaviyo",
     "vercel",
     "api",
     "contact-form"

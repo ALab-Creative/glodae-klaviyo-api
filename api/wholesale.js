@@ -1,6 +1,5 @@
-import { initMailchimp, upsertMember, addTags } from '../lib/mailchimp.js';
+import { initKlaviyo, createProfileSubscriptionJob } from '../lib/klaviyo.js';
 import { validateWholesalePayload, normalizePhone } from '../lib/validate.js';
-import { syncShopifyCustomer } from '../lib/shopify.js';
 
 /**
  * POST /api/wholesale
@@ -74,62 +73,44 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2) Initialize Mailchimp
-    const mailchimpConfig = initMailchimp();
+    // 2) Initialize Klaviyo
+    const klaviyoConfig = initKlaviyo();
 
     // 3) Normalize phone
     const normalizedPhone = normalizePhone(countryCode, phoneNumber);
 
-    // 4) Build a structured Mailchimp ADDRESS merge field.
-    // Mailchimp address-type merge fields expect an object, not a single string.
-    const addressValue = {
-      addr1: address.trim(),
-      addr2: (address2 || '').trim(),
-      city: city.trim(),
-      state: (province || '').trim(),
-      zip: postalCode.trim(),
-      country: country.trim()
+    // 4) Build Klaviyo profile attributes
+    const profileAttributes = {
+      email: email.trim().toLowerCase(),
+      phone_number: normalizedPhone,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      location: {
+        address1: address.trim(),
+        address2: (address2 || '').trim(),
+        city: city.trim(),
+        region: (province || '').trim(),
+        zip: postalCode.trim(),
+        country: country.trim()
+      },
+      properties: {
+        form_variant: 'wholesale',
+        company_attention: companyAttention.trim(),
+        company_description: String(companyDescription || '').trim(),
+        website: (website || '').trim(),
+        social_media_handle: (socialMediaHandle || '').trim(),
+        estimated_order_volume: estimatedOrderVolume.trim()
+      }
     };
 
-    // 5) Prepare merge fields using environment variable keys
-    const mergeFields = {
-      [process.env.MAILCHIMP_FIELD_FNAME || 'FNAME']: firstName.trim(),
-      [process.env.MAILCHIMP_FIELD_LNAME || 'LNAME']: lastName.trim(),
-      [process.env.MAILCHIMP_FIELD_COUNTRY || 'COUNTRY']: country.trim(),
-      [process.env.MAILCHIMP_FIELD_COMPATTN || 'COMPATTN']: companyAttention.trim(),
-      [process.env.MAILCHIMP_FIELD_ADDRESS || 'ADDRESS']: addressValue,
-      [process.env.MAILCHIMP_FIELD_PHONE || 'PHONE']: normalizedPhone,
-      [process.env.MAILCHIMP_FIELD_CMPDESC || 'CMPDESC']: String(companyDescription || '').trim(),
-      [process.env.MAILCHIMP_FIELD_WEBSITE || 'WEBSITE']: (website || '').trim(),
-      [process.env.MAILCHIMP_FIELD_SOCIAL || 'SOCIAL']: (socialMediaHandle || '').trim(),
-      [process.env.MAILCHIMP_FIELD_ESTVOL || 'ESTVOL']: estimatedOrderVolume.trim()
-    };
-
-    // 6) Upsert member to Mailchimp
-    await upsertMember(mailchimpConfig, {
-      email: email.trim(),
-      status: 'subscribed',
-      status_if_new: 'subscribed',
-      merge_fields: mergeFields
+    // 5) Submit Klaviyo subscription job
+    await createProfileSubscriptionJob(klaviyoConfig, {
+      listId: klaviyoConfig.listIdWholesale,
+      profile: profileAttributes,
+      source: 'Shopify Contact Form - Wholesale'
     });
 
-    // 7) Add tag
-    await addTags(mailchimpConfig, email.trim(), ['CONTACT_WHOLESALE']);
-
-    // 8) Best-effort Shopify customer sync
-    try {
-      await syncShopifyCustomer({
-        email: email.trim(),
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        phone: normalizedPhone,
-        tags: [process.env.SHOPIFY_WHOLESALE_CUSTOMER_TAG || 'CONTACT_WHOLESALE']
-      });
-    } catch (shopifyError) {
-      console.error('Shopify customer sync error (wholesale):', shopifyError);
-    }
-
-    // 9) Return success
+    // 6) Return success
     return res.status(200).json({
       ok: true,
       message: 'Wholesale form submitted successfully'
