@@ -1,4 +1,4 @@
-import { initKlaviyo, createProfileSubscriptionJob } from '../lib/klaviyo.js';
+import { initKlaviyo, createProfileSubscriptionJob, upsertProfile } from '../lib/klaviyo.js';
 import { validateContactPayload, normalizePhone } from '../lib/validate.js';
 
 /**
@@ -72,7 +72,20 @@ export default async function handler(req, res) {
       source: 'Shopify Contact Form - Regular'
     });
 
-    // 6) Return success
+    // 6) Upsert additional profile attributes and custom properties
+    await upsertProfile(klaviyoConfig, {
+      email: email.trim().toLowerCase(),
+      phone_number: normalizedPhone,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      properties: {
+        form_variant: 'regular',
+        country: country.trim(),
+        message: message.trim()
+      }
+    });
+
+    // 7) Return success
     return res.status(200).json({
       ok: true,
       message: 'Contact form submitted successfully'

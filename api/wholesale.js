@@ -1,4 +1,4 @@
-import { initKlaviyo, createProfileSubscriptionJob } from '../lib/klaviyo.js';
+import { initKlaviyo, createProfileSubscriptionJob, upsertProfile } from '../lib/klaviyo.js';
 import { validateWholesalePayload, normalizePhone } from '../lib/validate.js';
 
 /**
@@ -108,7 +108,31 @@ export default async function handler(req, res) {
       source: 'Shopify Contact Form - Wholesale'
     });
 
-    // 6) Return success
+    // 6) Upsert additional profile attributes and custom properties
+    await upsertProfile(klaviyoConfig, {
+      email: email.trim().toLowerCase(),
+      phone_number: normalizedPhone,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      location: {
+        address1: address.trim(),
+        address2: (address2 || '').trim(),
+        city: city.trim(),
+        region: (province || '').trim(),
+        zip: postalCode.trim(),
+        country: country.trim()
+      },
+      properties: {
+        form_variant: 'wholesale',
+        company_attention: companyAttention.trim(),
+        company_description: String(companyDescription || '').trim(),
+        website: (website || '').trim(),
+        social_media_handle: (socialMediaHandle || '').trim(),
+        estimated_order_volume: estimatedOrderVolume.trim()
+      }
+    });
+
+    // 7) Return success
     return res.status(200).json({
       ok: true,
       message: 'Wholesale form submitted successfully'
