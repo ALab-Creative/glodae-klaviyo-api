@@ -83,23 +83,21 @@ export default async function handler(req, res) {
     const profileAttributes = {
       email: email.trim().toLowerCase(),
       phone_number: normalizedPhone,
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      location: {
+      properties: {
+        form_variant: 'wholesale',
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        company_attention: companyAttention.trim(),
+        company_description: String(companyDescription || '').trim(),
+        website: (website || '').trim(),
+        social_media_handle: (socialMediaHandle || '').trim(),
+        estimated_order_volume: estimatedOrderVolume.trim(),
         address1: address.trim(),
         address2: (address2 || '').trim(),
         city: city.trim(),
         region: (province || '').trim(),
         zip: postalCode.trim(),
         country: country.trim()
-      },
-      properties: {
-        form_variant: 'wholesale',
-        company_attention: companyAttention.trim(),
-        company_description: String(companyDescription || '').trim(),
-        website: (website || '').trim(),
-        social_media_handle: (socialMediaHandle || '').trim(),
-        estimated_order_volume: estimatedOrderVolume.trim()
       }
     };
 

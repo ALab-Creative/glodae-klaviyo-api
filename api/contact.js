@@ -56,10 +56,10 @@ export default async function handler(req, res) {
     const profileAttributes = {
       email: email.trim().toLowerCase(),
       phone_number: normalizedPhone,
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
       properties: {
         form_variant: 'regular',
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
         country: country.trim(),
         message: message.trim()
       }
